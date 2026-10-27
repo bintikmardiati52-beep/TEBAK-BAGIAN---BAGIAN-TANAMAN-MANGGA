@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Game Pohon Mangga Pintar!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #87CEEB; /* Sky blue */
+            touch-action: manipulation;
+            overflow: hidden;
+        }
+        h1, h2, h3, .comic-font {
+            font-family: 'Fredoka One', cursive;
+        }
+        
+        /* Animations */
+        @keyframes bounce-sm {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .animate-bounce-sm {
+            animation: bounce-sm 2s infinite;
+        }
+
+        @keyframes tada {
+            0% { transform: scale(1); }
+            10%, 20% { transform: scale(0.9) rotate(-3deg); }
+            30%, 50%, 70%, 90% { transform: scale(1.1) rotate(3deg); }
+            40%, 60%, 80% { transform: scale(1.1) rotate(-3deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+        .animate-tada {
+            animation: tada 1s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .animate-shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: pop 0.3s ease-out;
+        }
+
+        /* SVG Hover Effects */
+        .tree-part {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .tree-part:hover {
+            filter: brightness(1.2);
+            stroke: #fff;
+            stroke-width: 3px;
+        }
+
+        /* Drag and Drop styling */
+        .letter-box {
+            width: 50px;
+            height: 50px;
+            border: 3px dashed #cbd5e1;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            background-color: rgba(255,255,255,0.5);
+            transition: all 0.2s;
+        }
+        .letter-box.filled {
+            border: 3px solid #4ade80;
+            background-color: #bbf7d0;
+            color: #166534;
+        }
+        .letter-card {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #fcd34d, #f59e0b);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #78350f;
+            cursor: grab;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            user-select: none;
+        }
+        .letter-card:active {
+            cursor: grabbing;
+        }
+        .letter-card.dragging {
+            opacity: 0.5;
+        }
+        .selected-letter {
+            border: 3px solid #3b82f6;
+            transform: scale(1.1);
+        }
+
+        /* Hide scrollbar */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center h-screen w-screen m-0 p-0">
+
+    <!-- Main Game Container -->
+    <div id="game-container" class="relative w-full max-w-md h-full sm:h-[800px] sm:rounded-3xl sm:border-8 border-white bg-gradient-to-b from-[#87CEEB] to-[#e0f6ff] overflow-hidden shadow-2xl flex flex-col">
+        
+        <!-- Screen 0: Main Menu -->
+        <div id="screen-menu" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-gradient-to-b from-green-300 to-green-500">
+            <h1 class="text-5xl text-white drop-shadow-md mb-2">Pohon Mangga Pintar</h1>
+            <p class="text-xl text-yellow-100 mb-8 font-bold">Yuk, main dan belajar bersama!</p>
+            
+            <div class="w-48 h-48 mb-8 animate-bounce-sm">
+                <!-- Simple Mango Emoji/SVG -->
+                <svg viewBox="0 0 100 100" class="w-full h-full">
+                    <circle cx="50" cy="50" r="45" fill="#f59e0b" />
+                    <path d="M50 10 Q60 5 70 20" stroke="#166534" stroke-width="4" fill="none"/>
+                    <path d="M60 15 Q75 10 80 25 Q65 30 60 15" fill="#22c55e"/>
+                    <circle cx="35" cy="45" r="5" fill="#fff"/>
+                    <circle cx="65" cy="45" r="5" fill="#fff"/>
+                    <circle cx="35" cy="45" r="2" fill="#000"/>
+                    <circle cx="65" cy="45" r="2" fill="#000"/>
+                    <path d="M40 65 Q50 75 60 65" stroke="#78350f" stroke-width="3" fill="none" stroke-linecap="round"/>
+                </svg>
+            </div>
+
+            <button onclick="startGame()" class="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 text-2xl comic-font py-4 px-10 rounded-full shadow-lg transform transition active:scale-95 border-4 border-yellow-200">
+                MULAI MAIN
+            </button>
+        </div>
+
+        <!-- Screen 1: Level 1 (Mengenal Bagian) -->
+        <div id="screen-level1" class="hidden absolute inset-0 flex flex-col items-center justify-between p-4 z-10">
+            <div class="bg-white/90 rounded-2xl p-3 shadow-md text-center w-full mt-4">
+                <h2 class="text-xl text-green-600">Level 1: Mengenal Pohon</h2>
+                <p id="l1-instruction" class="text-2xl text-gray-800 comic-font mt-1">Cari dan sentuh: <span id="l1-target" class="text-orange-500 animate-pulse">BUAH</span></p>
+            </div>
+
+            <!-- SVG Tree Container -->
+            <div class="relative flex-1 w-full max-w-[350px] my-4 bg-blue-50/50 rounded-3xl border-4 border-white/50 overflow-hidden shadow-inner">
+                <svg viewBox="0 0 400 500" class="w-full h-full drop-shadow-2xl">
+                    <defs>
+                        <!-- Gradasi untuk efek realistis -->
+                        <linearGradient id="trunkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#5C4033" />
+                            <stop offset="40%" stop-color="#8B5A2B" />
+                            <stop offset="80%" stop-color="#6E4225" />
+                            <stop offset="100%" stop-color="#3E2723" />
+                        </linearGradient>
+                        <radialGradient id="leafBase" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="#2E7D32" />
+                            <stop offset="80%" stop-color="#1B5E20" />
+                            <stop offset="100%" stop-color="#003300" />
+                        </radialGradient>
+                        <linearGradient id="leafHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#4CAF50" />
+                            <stop offset="100%" stop-color="#2E7D32" />
+                        </linearGradient>
+                        <radialGradient id="mangoGradReal" cx="40%" cy="40%" r="60%">
+                            <stop offset="0%" stop-color="#FFF176" />
+                            <stop offset="40%" stop-color="#FFB300" />
+                            <stop offset="80%" stop-color="#F57C00" />
+                            <stop offset="100%" stop-color="#4CAF50" /> <!-- Sedikit hijau di ujung -->
+                        </radialGradient>
+                        <!-- Daun Mangga Tunggal (Panjang & Runcing) -->
+                        <g id="mango-leaf">
+                            <path d="M0,0 Q10,-15 30,-20 Q50,-15 60,0 Q50,15 30,20 Q10,15 0,0 Z" fill="url(#leafHighlight)" stroke="#1B5E20" stroke-width="1"/>
+                            <path d="M0,0 Q30,0 60,0" stroke="#1B5E20" stroke-width="1" fill="none"/>
+                        </g>
+                    </defs>
+
+                    <!-- Tanah / Ground -->
+                    <path d="M0 430 Q 100 410 200 425 T 400 410 L 400 500 L 0 500 Z" fill="#558B2F" opacity="0.9"/>
+                    <path d="M0 445 Q 150 425 400 450 L 400 500 L 0 500 Z" fill="#7CB342" />
+                    
+                    <!-- AKAR (Roots) -->
+                    <g id="part-akar" class="tree-part" onclick="checkLevel1('akar')">
+                        <path d="M 170 425 Q 130 460 90 480" stroke="url(#trunkGrad)" stroke-width="12" fill="none" stroke-linecap="round"/>
+                        <path d="M 190 430 Q 170 470 150 500" stroke="url(#trunkGrad)" stroke-width="16" fill="none" stroke-linecap="round"/>
+                        <path d="M 210 430 Q 230 460 250 490" stroke="url(#trunkGrad)" stroke-width="18" fill="none" stroke-linecap="round"/>
+                        <path d="M 230 425 Q 280 440 320 470" stroke="url(#trunkGrad)" stroke-width="14" fill="none" stroke-linecap="round"/>
+                        <!-- Area Klik Akar -->
+                        <rect x="80" y="420" width="260" height="80" fill="transparent" />
+                    </g>
+
+                    <!-- BATANG (Trunk) - Lebih realistis dan bertekstur -->
+                    <g id="part-batang" class="tree-part" onclick="checkLevel1('batang')">
+                        <!-- Base Trunk -->
+                        <path d="M 165 435 C 175 350, 180 280, 175 220 L 225 220 C 220 280, 225 350, 235 435 Z" fill="url(#trunkGrad)" />
+                        <!-- Cabang Kiri -->
+                        <path d="M 180 250 C 160 200, 120 160, 80 140" stroke="url(#trunkGrad)" stroke-width="20" fill="none" stroke-linecap="round"/>
+                        <!-- Cabang Tengah -->
+                        <path d="M 190 230 C 190 170, 200 130, 200 100" stroke="url(#trunkGrad)" stroke-width="22" fill="none" stroke-linecap="round"/>
+                        <!-- Cabang Kanan -->
+                        <path d="M 220 250 C 240 200, 280 150, 320 130" stroke="url(#trunkGrad)" stroke-width="18" fill="none" stroke-linecap="round"/>
+                        
+                        <!-- Tekstur Kayu -->
+                        <path d="M 175 420 Q 185 360 182 300" stroke="#3E2723" stroke-width="1.5" fill="none" opacity="0.7"/>
+                        <path d="M 195 430 Q 200 350 197 250" stroke="#3E2723" stroke-width="2" fill="none" opacity="0.6"/>
+                        <path d="M 215 425 Q 210 340 215 280" stroke="#3E2723" stroke-width="1.5" fill="none" opacity="0.7"/>
+                        
+                        <!-- Area Klik Batang -->
+                        <rect x="150" y="200" width="100" height="230" fill="transparent" />
+                    </g>
+
+                    <!-- DAUN (Leaves) - Menggunakan bentuk daun mangga panjang dan rimbun -->
+                    <g id="part-daun" class="tree-part" onclick="checkLevel1('daun')">
+                        <!-- Background Gelap Kanopi -->
+                        <circle cx="200" cy="150" r="120" fill="url(#leafBase)" opacity="0.9"/>
+                        <circle cx="120" cy="180" r="90" fill="url(#leafBase)" opacity="0.9"/>
+                        <circle cx="280" cy="170" r="95" fill="url(#leafBase)" opacity="0.9"/>
+                        <circle cx="200" cy="80" r="80" fill="url(#leafBase)" opacity="0.9"/>
+                        
+                        <!-- Detail Daun (Disebar acak agar terlihat seperti rimbunan daun mangga) -->
+                        <use href="#mango-leaf" x="180" y="100" transform="rotate(-20 180 100) scale(0.8)"/>
+                        <use href="#mango-leaf" x="150" y="120" transform="rotate(15 150 120) scale(0.9)"/>
+                        <use href="#mango-leaf" x="220" y="110" transform="rotate(45 220 110) scale(0.85)"/>
+                        <use href="#mango-leaf" x="250" y="140" transform="rotate(-10 250 140) scale(0.9)"/>
+                        <use href="#mango-leaf" x="100" y="160" transform="rotate(-30 100 160) scale(0.8)"/>
+                        <use href="#mango-leaf" x="130" y="200" transform="rotate(25 130 200) scale(0.8)"/>
+                        <use href="#mango-leaf" x="280" y="190" transform="rotate(60 280 190) scale(0.85)"/>
+                        <use href="#mango-leaf" x="260" y="110" transform="rotate(-40 260 110) scale(0.9)"/>
+                        <use href="#mango-leaf" x="190" y="170" transform="rotate(10 190 170) scale(1)"/>
+                        <use href="#mango-leaf" x="160" y="220" transform="rotate(-15 160 220) scale(0.8)"/>
+                        <use href="#mango-leaf" x="240" y="210" transform="rotate(35 240 210) scale(0.8)"/>
+                        <use href="#mango-leaf" x="70"  y="190" transform="rotate(-50 70 190) scale(0.7)"/>
+                        <use href="#mango-leaf" x="310" y="160" transform="rotate(70 310 160) scale(0.8)"/>
+                        
+                        <!-- Area Klik Daun -->
+                        <circle cx="200" cy="150" r="140" fill="transparent" />
+                    </g>
+
+                    <!-- BUNGA (Flowers) - Bentuk Malai/Panicle Mangga Asli -->
+                    <g id="part-bunga" class="tree-part" onclick="checkLevel1('bunga')">
+                        <!-- Malai Bunga 1 Kiri -->
+                        <g transform="translate(60, 110)">
+                            <path d="M 20 50 Q 20 20 30 0 M 20 40 L 10 30 M 22 30 L 35 20 M 25 15 L 15 5 M 28 5 L 40 -5" stroke="#8D6E63" stroke-width="1.5" fill="none"/>
+                            <circle cx="30" cy="0" r="2.5" fill="#FFECB3"/><circle cx="10" cy="30" r="2.5" fill="#FFE082"/><circle cx="35" cy="20" r="2.5" fill="#FFECB3"/>
+                            <circle cx="15" cy="5" r="2.5" fill="#FFD54F"/><circle cx="40" cy="-5" r="2.5" fill="#FFE082"/><circle cx="20" cy="40" r="2.5" fill="#FFECB3"/>
+                            <circle cx="22" cy="30" r="2.5" fill="#FFD54F"/><circle cx="25" cy="15" r="2.5" fill="#FFECB3"/><circle cx="28" cy="5" r="2.5" fill="#FFE082"/>
+                        </g>
+                        <!-- Malai Bunga 2 Atas -->
+                        <g transform="translate(180, 40)">
+                            <path d="M 20 50 Q 20 20 10 0 M 20 40 L 30 25 M 18 30 L 5 15 M 15 20 L 25 5 M 12 10 L 0 -5" stroke="#8D6E63" stroke-width="1.5" fill="none"/>
+                            <circle cx="10" cy="0" r="2.5" fill="#FFECB3"/><circle cx="30" cy="25" r="2.5" fill="#FFE082"/><circle cx="5" cy="15" r="2.5" fill="#FFECB3"/>
+                            <circle cx="25" cy="5" r="2.5" fill="#FFD54F"/><circle cx="0" cy="-5" r="2.5" fill="#FFE082"/><circle cx="20" cy="40" r="2.5" fill="#FFECB3"/>
+                            <circle cx="18" cy="30" r="2.5" fill="#FFD54F"/><circle cx="15" cy="20" r="2.5" fill="#FFECB3"/><circle cx="12" cy="10" r="2.5" fill="#FFE082"/>
+                        </g>
+                        <!-- Malai Bunga 3 Kanan -->
+                        <g transform="translate(290, 100)">
+                            <path d="M 10 50 Q 15 20 5 0 M 12 40 L 0 30 M 14 30 L 25 20 M 10 15 L 0 5 M 8 5 L 20 -5" stroke="#8D6E63" stroke-width="1.5" fill="none"/>
+                            <circle cx="5" cy="0" r="2.5" fill="#FFECB3"/><circle cx="0" cy="30" r="2.5" fill="#FFE082"/><circle cx="25" cy="20" r="2.5" fill="#FFECB3"/>
+                            <circle cx="0" cy="5" r="2.5" fill="#FFD54F"/><circle cx="20" cy="-5" r="2.5" fill="#FFE082"/><circle cx="12" cy="40" r="2.5" fill="#FFECB3"/>
+                            <circle cx="14" cy="30" r="2.5" fill="#FFD54F"/><circle cx="10" cy="15" r="2.5" fill="#FFECB3"/><circle cx="8" cy="5" r="2.5" fill="#FFE082"/>
+                        </g>
+                        <!-- Area Klik Bunga -->
+                        <rect x="50" y="20" width="280" height="130" fill="transparent" />
+                    </g>
+
+                    <!-- BUAH (Fruits) - Bentuk Oval/Ginjal khas mangga dengan tangkai panjang -->
+                    <g id="part-buah" class="tree-part" onclick="checkLevel1('buah')">
+                        <!-- Mangga 1 Kiri -->
+                        <g transform="translate(110, 190)">
+                            <!-- Tangkai panjang -->
+                            <path d="M 15 0 Q 12 15 15 30" stroke="#3E2723" stroke-width="2" fill="none"/>
+                            <!-- Daun kecil di tangkai -->
+                            <use href="#mango-leaf" x="12" y="10" transform="rotate(-60 12 10) scale(0.3)"/>
+                            <!-- Buah bentuk mangga asli (melengkung) -->
+                            <path d="M 15 30 C 35 30, 40 60, 25 80 C 10 95, -10 70, -5 50 C -2 35, 5 30, 15 30 Z" fill="url(#mangoGradReal)" />
+                        </g>
+
+                        <!-- Mangga 2 Kanan -->
+                        <g transform="translate(250, 180)">
+                            <path d="M 15 0 Q 18 15 15 35" stroke="#3E2723" stroke-width="2" fill="none"/>
+                            <use href="#mango-leaf" x="15" y="15" transform="rotate(40 15 15) scale(0.3)"/>
+                            <path d="M 15 35 C 35 35, 40 65, 25 85 C 10 100, -10 75, -5 55 C -2 40, 5 35, 15 35 Z" fill="url(#mangoGradReal)" />
+                        </g>
+
+                        <!-- Mangga 3 Tengah Bawah -->
+                        <g transform="translate(180, 220)">
+                            <path d="M 15 0 Q 15 10 15 25" stroke="#3E2723" stroke-width="2" fill="none"/>
+                            <path d="M 15 25 C 35 25, 40 55, 25 75 C 10 90, -10 65, -5 45 C -2 30, 5 25, 15 25 Z" fill="url(#mangoGradReal)" transform="scale(0.85) translate(3, 5)" />
+                        </g>
+                    </g>
+                </svg>
+            </div>
+
+            <div class="h-16 flex items-center justify-center w-full">
+                <div class="flex gap-2">
+                    <span id="star-1" class="text-3xl text-gray-300">⭐</span>
+                    <span id="star-2" class="text-3xl text-gray-300">⭐</span>
+                    <span id="star-3" class="text-3xl text-gray-300">⭐</span>
+                    <span id="star-4" class="text-3xl text-gray-300">⭐</span>
+                    <span id="star-5" class="text-3xl text-gray-300">⭐</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen 2: Level 2 (Menyusun Huruf) -->
+        <div id="screen-level2" class="hidden absolute inset-0 flex flex-col items-center justify-start p-4 z-10 bg-gradient-to-b from-blue-200 to-white">
+            <div class="bg-white/90 rounded-2xl p-3 shadow-md text-center w-full mt-4 mb-4">
+                <h2 class="text-xl text-blue-600">Level 2: Menyusun Kata</h2>
+                <p class="text-lg text-gray-700">Tarik huruf ke kotak yang kosong!</p>
+            </div>
+
+            <!-- Image Hint -->
+            <div id="l2-image-container" class="w-40 h-40 bg-white rounded-3xl shadow-lg flex items-center justify-center mb-8 border-4 border-blue-300 animate-pop">
+                <!-- Dynamic SVG will be injected here -->
+            </div>
+
+            <!-- Drop Zones -->
+            <div id="l2-drop-zones" class="flex gap-2 mb-12">
+                <!-- Boxes injected via JS -->
+            </div>
+
+            <!-- Draggable Letters -->
+            <div class="bg-white/60 p-4 w-full rounded-t-3xl mt-auto">
+                <p class="text-center text-gray-500 mb-2 text-sm">Pilih dan masukkan huruf</p>
+                <div id="l2-letters" class="flex flex-wrap justify-center gap-3">
+                    <!-- Letters injected via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback Modal (Benar/Salah) -->
+        <div id="feedback-modal" class="hidden absolute inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div id="feedback-box" class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl transform scale-50 opacity-0 transition-all duration-300">
+                <div id="feedback-icon" class="text-6xl mb-4">🌟</div>
+                <h2 id="feedback-title" class="text-3xl comic-font text-green-500 mb-2">HEBAT!</h2>
+                <p id="feedback-msg" class="text-lg text-gray-600 mb-6">Itu adalah buah mangga!</p>
+                <button id="feedback-btn" onclick="nextStep()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-lg text-xl w-full">
+                    LANJUT
+                </button>
+            </div>
+        </div>
+
+        <!-- End Screen -->
+        <div id="screen-end" class="hidden absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-gradient-to-b from-yellow-300 to-orange-400">
+            <h1 class="text-5xl text-white drop-shadow-md mb-4 animate-tada">HOREEE!</h1>
+            <div class="text-6xl mb-4">🏆</div>
+            <p class="text-2xl text-white mb-8 font-bold drop-shadow-sm">Kamu berhasil menyelesaikan semua level!</p>
+            <button onclick="location.reload()" class="bg-white text-orange-500 text-2xl comic-font py-4 px-10 rounded-full shadow-lg transform transition active:scale-95 border-4 border-orange-200">
+                MAIN LAGI
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // Data Game
+        const treeParts = [
+            { id: 'akar', name: 'AKAR', msg: 'Akar mencari minum di dalam tanah!', icon: '🪱' },
+            { id: 'batang', name: 'BATANG', msg: 'Batang membuat pohon berdiri kuat!', icon: '🪵' },
+            { id: 'daun', name: 'DAUN', msg: 'Daun yang hijau tempat memasak makanan!', icon: '🍃' },
+            { id: 'bunga', name: 'BUNGA', msg: 'Bunga cantik ini nanti akan jadi buah!', icon: '🌼' },
+            { id: 'buah', name: 'BUAH', msg: 'Buah mangga rasanya manis sekali!', icon: '🥭' }
+        ];
+
+        // Game State
+        let currentLevel = 0; // 0=Menu, 1=Mengenal, 2=Menyusun
+        let currentPartIndex = 0;
+        let l2CurrentWord = [];
+        let l2ShuffledLetters = [];
+        let l2FilledCount = 0;
+        
+        // --- Audio & Speech System ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let currentSpeechSource = null;
+
+        // Fungsi agar game bisa bicara menggunakan AI TTS (Voice-Over Ceria & Jelas)
+        async function speak(text, tone = 'ceria') {
+            // Hentikan suara sebelumnya jika ada yang sedang berjalan
+            if (currentSpeechSource) {
+                try { currentSpeechSource.stop(); } catch(e){}
+                currentSpeechSource = null;
+            }
+
+            // Sesuaikan emosi suara dengan konteks jawaban (perintah/benar/salah)
+            let promptText = `Ucapkan dengan sangat ceria, antusias, dan ramah seperti anak kecil yang sedang bermain: ${text}`;
+            if (tone === 'salah') {
+                promptText = `Ucapkan dengan nada terkejut lembut "Ohhh" dan sedikit sedih/menyayangkan seperti anak kecil, lalu kembali bersemangat: ${text}`;
+            }
+
+            try {
+                const payload = {
+                    contents: [{ parts: [{ text: promptText }] }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: {
+                                prebuiltVoiceConfig: { voiceName: "Leda" } // Suara berkarakter anak-anak/muda
+                            }
+                        }
+                    },
+                    model: "gemini-2.5-flash-preview-tts"
+                };
+                
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType;
+
+                if (audioData) {
+                    let sampleRate = 24000;
+                    if (mimeType) {
+                        const match = mimeType.match(/rate=(\d+)/);
+                        if (match) sampleRate = parseInt(match[1], 10);
+                    }
+
+                    // Proses Data Audio (PCM 16-bit ke Float32 untuk dimainkan)
+                    const binaryString = atob(audioData);
+                    const len = binaryString.length;
+                    const bytes = new Uint8Array(len);
+                    for (let i = 0; i < len; i++) bytes[i] = binaryString.charCodeAt(i);
+                    
+                    const int16Data = new Int16Array(bytes.buffer);
+                    const float32Data = new Float32Array(int16Data.length);
+                    for (let i = 0; i < int16Data.length; i++) {
+                        float32Data[i] = int16Data[i] / 32768.0;
+                    }
+
+                    // Mainkan suara
+                    if (audioCtx.state === 'suspended') await audioCtx.resume();
+                    const buffer = audioCtx.createBuffer(1, float32Data.length, sampleRate);
+                    buffer.getChannelData(0).set(float32Data);
+
+                    const source = audioCtx.createBufferSource();
+                    source.buffer = buffer;
+                    source.connect(audioCtx.destination);
+                    currentSpeechSource = source;
+                    source.start();
+                }
+            } catch (error) {
+                console.error("Gagal memuat suara ceria:", error);
+            }
+        }
+
+        // Fungsi Efek Suara (Sound Effects)
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            if (type === 'correct') {
+                // Suara "Ting!" yang ceria
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(600, audioCtx.currentTime); 
+                oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1); 
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'wrong') {
+                // Suara "Tet-tot" halus
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+                gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'pop') {
+                // Suara ketukan ringan saat huruf disentuh/dijatuhkan
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'win') {
+                // Suara kemenangan (Naik tangga nada)
+                oscillator.type = 'square';
+                oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(600, audioCtx.currentTime + 0.1);
+                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime + 0.2);
+                oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.6);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.6);
+            }
+        }
+        
+        // --- Navigation ---
+        function showScreen(screenId) {
+            ['screen-menu', 'screen-level1', 'screen-level2', 'screen-end'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function startGame() {
+            // Resume Audio Context in case browser requires user interaction first
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            currentLevel = 1;
+            currentPartIndex = 0;
+            shuffleArray(treeParts); // Randomize order
+            showScreen('screen-level1');
+            updateLevel1UI();
+        }
+
+        // --- LEVEL 1: Mengenal Bagian ---
+        function updateLevel1UI() {
+            const target = treeParts[currentPartIndex];
+            document.getElementById('l1-target').innerText = target.name;
+            
+            // Suara Instruksi Perintah
+            speak("Halo teman-teman! Ayo cari dan sentuh gambar " + target.name + "!", "ceria");
+            
+            // Update Stars
+            for(let i=1; i<=5; i++) {
+                const star = document.getElementById(`star-${i}`);
+                if(i <= currentPartIndex) {
+                    star.classList.remove('text-gray-300');
+                    star.classList.add('text-yellow-400', 'animate-pop');
+                } else {
+                    star.classList.add('text-gray-300');
+                    star.classList.remove('text-yellow-400', 'animate-pop');
+                }
+            }
+        }
+
+        function checkLevel1(clickedId) {
+            const target = treeParts[currentPartIndex];
+            if(clickedId === target.id) {
+                // Correct!
+                playSound('correct');
+                speak("Ya, benar! Itu " + target.name + "!", "ceria");
+                showFeedback(true, "HEBAT!", `Betul sekali! Ini adalah ${target.name}. ${target.msg}`, target.icon);
+            } else {
+                // Wrong!
+                playSound('wrong');
+                speak("Ohhh, salah. Yuk, semangat cari lagi!", "salah");
+                const clickedElement = document.getElementById(`part-${clickedId}`);
+                clickedElement.classList.add('animate-shake');
+                setTimeout(() => clickedElement.classList.remove('animate-shake'), 500);
+                showFeedback(false, "OOPS!", `Itu bukan ${target.name}. Yuk, coba cari lagi!`, "🤔");
+            }
+        }
+
+        // --- LEVEL 2: Menyusun Huruf ---
+        function startLevel2() {
+            currentLevel = 2;
+            currentPartIndex = 0;
+            showScreen('screen-level2');
+            updateLevel2UI();
+        }
+
+        function updateLevel2UI() {
+            const target = treeParts[currentPartIndex];
+            l2CurrentWord = target.name.split('');
+            l2FilledCount = 0;
+            
+            // Suara Instruksi Perintah
+            speak("Asyik! Mari menyusun kata " + target.name + ". Tarik huruf ke kotak yang kosong ya!", "ceria");
+            
+            // Set Icon
+            document.getElementById('l2-image-container').innerHTML = `<span class="text-6xl">${target.icon}</span>`;
+            
+            // Setup Drop Zones
+            const dropContainer = document.getElementById('l2-drop-zones');
+            dropContainer.innerHTML = '';
+            l2CurrentWord.forEach((letter, index) => {
+                const box = document.createElement('div');
+                box.className = 'letter-box';
+                box.dataset.expected = letter;
+                box.dataset.index = index;
+                // Add click event for mobile tap-to-place fallback
+                box.onclick = () => handleBoxClick(box);
+                // Desktop Drag & Drop events
+                box.ondragover = (e) => e.preventDefault();
+                box.ondrop = (e) => handleDrop(e, box);
+                dropContainer.appendChild(box);
+            });
+
+            // Setup Draggable Letters
+            const letterContainer = document.getElementById('l2-letters');
+            letterContainer.innerHTML = '';
+            l2ShuffledLetters = [...l2CurrentWord];
+            shuffleArray(l2ShuffledLetters);
+            
+            l2ShuffledLetters.forEach((letter, index) => {
+                const card = document.createElement('div');
+                card.className = 'letter-card animate-pop';
+                card.innerText = letter;
+                card.draggable = true;
+                card.id = `letter-${index}`;
+                // Touch/Tap fallback for mobile
+                card.onclick = () => handleLetterClick(card);
+                // Desktop Drag & Drop events
+                card.ondragstart = (e) => handleDragStart(e, card);
+                card.ondragend = () => card.classList.remove('dragging');
+                letterContainer.appendChild(card);
+            });
+            
+            selectedLetterCard = null; // reset selection
+        }
+
+        // --- Drag & Drop / Tap Logic (Level 2) ---
+        let draggedCard = null;
+        let selectedLetterCard = null; // For mobile tap fallback
+
+        function handleDragStart(e, card) {
+            draggedCard = card;
+            card.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', card.innerText);
+        }
+
+        function handleDrop(e, box) {
+            e.preventDefault();
+            const letter = e.dataTransfer.getData('text/plain');
+            checkLetterPlacement(letter, box, draggedCard);
+        }
+
+        // Fallback Mobile Tap Logic
+        function handleLetterClick(card) {
+            // Unselect previous
+            if(selectedLetterCard) {
+                selectedLetterCard.classList.remove('selected-letter');
+            }
+            selectedLetterCard = card;
+            card.classList.add('selected-letter');
+        }
+
+        function handleBoxClick(box) {
+            if(!selectedLetterCard) return;
+            const letter = selectedLetterCard.innerText;
+            checkLetterPlacement(letter, box, selectedLetterCard);
+            selectedLetterCard = null;
+        }
+
+        function checkLetterPlacement(letter, box, cardElement) {
+            if(box.classList.contains('filled')) return; // Already filled
+
+            if(letter === box.dataset.expected) {
+                // Correct placement
+                playSound('pop'); // Suara ketukan saat huruf masuk dengan benar
+                box.innerText = letter;
+                box.classList.add('filled', 'animate-pop');
+                cardElement.style.visibility = 'hidden'; // Hide the original card
+                l2FilledCount++;
+                
+                if(l2FilledCount === l2CurrentWord.length) {
+                    setTimeout(() => {
+                        playSound('win');
+                        speak("Ya, benar! Wah hebat, kamu berhasil menyusun kata " + treeParts[currentPartIndex].name + "!", "ceria");
+                        const target = treeParts[currentPartIndex];
+                        showFeedback(true, "PINTAR!", `Kamu berhasil menyusun kata ${target.name}!`, "🎉");
+                    }, 500);
+                }
+            } else {
+                // Wrong placement
+                playSound('wrong');
+                speak("Ohhh, salah.", "salah"); // Tambahan ucapan saat salah taruh huruf
+                box.classList.add('animate-shake', 'border-red-400');
+                if(cardElement) {
+                    cardElement.classList.add('animate-shake');
+                    cardElement.classList.remove('selected-letter');
+                }
+                setTimeout(() => {
+                    box.classList.remove('animate-shake', 'border-red-400');
+                    if(cardElement) cardElement.classList.remove('animate-shake');
+                }, 500);
+            }
+        }
+
+        // --- Feedback Modal ---
+        function showFeedback(isCorrect, title, msg, icon) {
+            const modal = document.getElementById('feedback-modal');
+            const box = document.getElementById('feedback-box');
+            const btn = document.getElementById('feedback-btn');
+            
+            document.getElementById('feedback-icon').innerText = icon;
+            document.getElementById('feedback-title').innerText = title;
+            document.getElementById('feedback-title').className = `text-4xl comic-font mb-2 ${isCorrect ? 'text-green-500' : 'text-orange-500'}`;
+            document.getElementById('feedback-msg').innerText = msg;
+            
+            btn.innerText = isCorrect ? "LANJUT" : "COBA LAGI";
+            btn.className = `font-bold py-3 px-8 rounded-full shadow-lg text-xl w-full text-white ${isCorrect ? 'bg-green-500 hover:bg-green-600' : 'bg-orange-500 hover:bg-orange-600'}`;
+            
+            // Add custom property to button to know what to do next
+            btn.dataset.correct = isCorrect;
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                box.classList.remove('scale-50', 'opacity-0');
+                box.classList.add('scale-100', 'opacity-100', isCorrect ? 'animate-tada' : 'animate-bounce-sm');
+            }, 50);
+        }
+
+        function nextStep() {
+            const modal = document.getElementById('feedback-modal');
+            const box = document.getElementById('feedback-box');
+            const btn = document.getElementById('feedback-btn');
+            const isCorrect = btn.dataset.correct === 'true';
+
+            // Hide modal animation
+            box.classList.remove('scale-100', 'opacity-100', 'animate-tada', 'animate-bounce-sm');
+            box.classList.add('scale-50', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                
+                if(isCorrect) {
+                    currentPartIndex++;
+                    if(currentPartIndex >= treeParts.length) {
+                        // Level Complete
+                        if(currentLevel === 1) {
+                            startLevel2();
+                        } else {
+                            showScreen('screen-end');
+                        }
+                    } else {
+                        // Next part in current level
+                        if(currentLevel === 1) updateLevel1UI();
+                        if(currentLevel === 2) updateLevel2UI();
+                    }
+                }
+            }, 300);
+        }
+
+        // Utility: Shuffle Array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+    </script>
+</body>
+</html>
